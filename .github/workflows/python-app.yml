@@ -28,6 +28,13 @@ jobs:
         python -m pip install --upgrade pip
         pip install flake8 pytest
         if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+        # Run the application using Makefile
+    - name: Install and Run the Application
+      run: |
+        set -x
+        make install   # Install dependencies via Makefile
+        make run &     # Start the application and run it in the background
+        sleep 5        # Allow time for the server to start
     - name: Lint with flake8
       run: |
         # stop the build if there are Python syntax errors or undefined names
@@ -38,13 +45,7 @@ jobs:
       run: |
         pytest
    
-    # Run the application using Makefile
-    - name: Install and Run the Application
-      run: |
-        set -x
-        make install   # Install dependencies via Makefile
-        make run &     # Start the application and run it in the background
-        sleep 5        # Allow time for the server to start
+
 
     
 
