@@ -20,9 +20,13 @@ class KMeans:
         elif self.init_method == 'kmeans++':
             centroids = [X[np.random.choice(X.shape[0], 1, replace=False)][0]]
             for _ in range(1, self.n_clusters):
-                distances = np.array([min([np.linalg.norm(x-c)**2 for c in centroids]) for x in X])
+                distances = np.array([min([np.linalg.norm(x - c)**2 for c in centroids]) for x in X])
+                if np.any(np.isnan(distances)):
+                    raise ValueError("NaN encountered in distance calculation during kmeans++ initialization")
+
                 probabilities = distances / distances.sum()
-                centroids.append(X[np.random.choice(X.shape[0], 1, p=probabilities)])
+                next_centroid = X[np.random.choice(X.shape[0], 1, p=probabilities)][0]
+                centroids.append(next_centroid)
             return np.array(centroids)
         elif self.init_method == 'farthest':
             centroids = [X[np.random.choice(X.shape[0], 1, replace=False)][0]]
