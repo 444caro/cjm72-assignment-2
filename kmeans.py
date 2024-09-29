@@ -44,8 +44,10 @@ class KMeans:
     
     def fit(self, X):
         self.centroids = self.initialize_centroids(X)
+        if self.centroids is None:
+            raise ValueError("Centroids not initialized")
         for _ in range(self.max_iter):
-            labels = np.argmin(np.array([[norm(x-c) for c in self.centroids] for x in X]), axis=1)
+            labels = np.argmin(np.array([[norm(x - c) for c in self.centroids] for x in X]), axis=1)
             new_centroids = np.array([X[labels == i].mean(axis=0) for i in range(self.n_clusters)])
             if np.allclose(self.centroids, new_centroids, atol=self.tol):
                 break
