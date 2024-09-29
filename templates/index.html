@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KMeans Clustering Visualization</title>
+    <style>
+        #cluster-image {
+            max-width: 100%;
+            height: auto;
+        }
+    </style>
+</head>
+<body>
+    <h1>KMeans Clustering Visualization</h1>
+
+    <label for="n_clusters">Number of Clusters:</label>
+    <input type="number" id="n_clusters" name="n_clusters" value="3" min="1"><br>
+
+    <label for="init_method">Initialization Method:</label>
+    <select id="init_method">
+        <option value="random">Random</option>
+        <option value="kmeans++">KMeans++</option>
+        <option value="farthest">Farthest First</option>
+        <option value="manual">Manual</option>
+    </select><br><br>
+
+    <label for = "n_points">Number of Data Points:</label>
+    <input type = "number" id = "n_points" name = "n_points" value = "10" min = "1"><br><br>
+
+    <button id="generate-clusters">Generate Clusters</button>
+
+
+    <div id="cluster-plot">
+        <img id="cluster-image" alt="Cluster Plot" width="500" height="500">
+    </div>
+
+    <script>
+        let manualCentroids = [];
+        let dataBounds = { xMin: 0, xMax: 10, yMin: 0, yMax: 10 };
+        const initMethodSelect = document.getElementById('init_method');
+        const clusterPlotDiv = document.getElementById('cluster-plot');
+
+        function updateDataBounds(newBounds) {
+            dataBounds = newBounds;
+        }
+        // Helper function to convert click coordinates to data space
+        function convertClickToDataSpace(x, y) {
+            const plotWidth = document.getElementById('cluster-image').width;
+            const plotHeight = document.getElementById('cluster-image').height;
+
+            const dataX = dataBounds.xMin + (x / plotWidth) * (dataBounds.xMax - dataBounds.xMin);
+            const dataY = dataBounds.yMax - (y / plotHeight) * (dataBounds.yMax - dataBounds.yMin);
+
+            return [dataX, dataY];
+        }
+
+        // generate random data points
+        const generateRandomData = (nPoints) => {
+            const data = [];
+            for (let i = 0; i < nPoints; i++) {
+                const x = Math.random() * (dataBounds.xMax - dataBounds.xMin) + dataBounds.xMin;
+                const y = Math.random() * (dataBounds.yMax - dataBounds.yMin) + dataBounds.yMin;
+                data.push([x, y]);
+            }
+            return data;
+        };
+
+        // Event listener for clicking to add manual centroids
+        clusterPlotDiv.addEventListener('click', function(event) {
+            const rect = this.getBoundingClientRect();
+            const clickX = event.clientX - rect.left;
+            const clickY = event.clientY - rect.top;
+            const [dataX, dataY] = convertClickToDataSpace(clickX, clickY);
+            if (initMethodSelect.value === 'manual') {
+
+
+                manualCentroids.push([dataX, dataY]);
+                console.log("Manual centroid selected:", manualCentroids);
+
+                // Optionally, display the manually selected centroids visually on the plot
+                const newCentroidMarker = document.createElement('div');
+                newCentroidMarker.style.position = 'absolute';
+                newCentroidMarker.style.width = '10px';
+                newCentroidMarker.style.height = '10px';
+                newCentroidMarker.style.background = 'red';
+                newCentroidMarker.style.borderRadius = '50%';
+                newCentroidMarker.style.left = `${x - 5}px`;
+                newCentroidMarker.style.top = `${y - 5}px`;
+
+                clusterPlotDiv.appendChild(newCentroidMarker);
+            }
+        });
+
+  
+        // Generate clusters when the button is clicked
+        const generateClustersButton = document.getElementById('generate-clusters');
+        generateClustersButton.addEventListener('click', function() {
+            const nClusters = document.getElementById('n_clusters').value;
+            const initMethod = document.getElementById('init_method').value;
+            const nPoints = document.getElementById('n_points').value;
+
+            // validate manual centroids
+            if (initMethod === 'manual' && manualCentroids.length !== parseInt(nClusters)) {
+                alert(`Please select ${nClusters} manual centroids.`);
+                return;
+            }
+
+            // Generate random data points
+            const data = generateRandomData(nPoints);
+
+                // Prepare the POST request payload
+            const payload = JSON.stringify({
+                X: data,
+                n_clusters: parseInt(nClusters),
+                init_method: initMethod,
+                initial_centroids: (initMethod === 'manual') ? manualCentroids : null
+            });
+
+            // Send the POST request to the Flask API
+            fetch('/kmeans', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: payload
+            })
+            .then (response => response.blob())
+            .then(blob => {
+                // Create an object URL from the blob
+                const objectURL = URL.createObjectURL(blob);
+                // Set the image source to the object URL
+                document.getElementById('cluster-image').src = objectURL;
+            })
+            .catch(error => {
+                console.error("Network error:", error);
+            });
+        });
+        // fetch and update data bounds from the backend 
+        fetch('/get_data_bounds')
+            .then(response => response.json())
+            .then(bounds => {
+                updateDataBounds(bounds);
+            })
+            .catch(error => console.error('Error fetching data bounds:', error));
+    </script>
+</body>
+</html>
