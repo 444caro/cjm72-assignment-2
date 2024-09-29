@@ -4,7 +4,7 @@ from numpy.linalg import norm
 import random
 
 class KMeans:
-    def __init__(self, n_clusters, max_iter=300, tol=1e-4, init_method='random'):
+    def __init__(self, n_clusters, max_iter=300, tol=1e-4, init_method='random', initial_centroids=None):
         # n_clusters: number of clusters, max_iter: maximum number of iterations, 
         # tol: tolerance, init_method: initialization method
         self.n_clusters = n_clusters
@@ -12,6 +12,7 @@ class KMeans:
         self.tol = tol
         self.init_method = init_method
         self.centroids = None
+        self.initial_centroids = initial_centroids
         
     def initialize_centroids(self, X):
         if self.init_method == 'random':
@@ -23,9 +24,19 @@ class KMeans:
                 probabilities = distances / distances.sum()
                 centroids.append(X[np.random.choice(X.shape[0], 1, p=probabilities)])
             return np.array(centroids)
+        elif self.init_method == 'farthest':
+            centroids = [X[np.random.choice(X.shape[0], 1, replace=False)][0]]
+            for _ in range(1, self.n_clusters):
+                distances = np.array([min([np.linalg.norm(x-c) for c in centroids]) for x in X])
+                farthest = X[np.argmax(distances)]
+                centroids.append(farthest)
+            return np.array(centroids)
+        elif self.init_method == 'manual':
+            if self.initial_centroids is None or len(self.initial_centroids) != self.n_clusters:
+                raise ValueError("Invalid initial centroids")
+            return np.array(self.initial_centroids)
         else:
             raise ValueError("Invalid initialization method")
-        return centroids
     
     def fit(self, X):
         self.centroids = self.initialize_centroids(X)
