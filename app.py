@@ -48,8 +48,8 @@ class KMeans:
         new_centers = np.zeros_like(self.centers)
         for i in range(self.n_clusters):
             points = self.data[self.assign == i]
-        if len(points) > 0:
-            new_centers[i] = points.mean(axis=0)
+            if len(points) > 0:
+                new_centers[i] = points.mean(axis=0)
         return new_centers
     
     def step(self):

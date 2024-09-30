@@ -49,7 +49,7 @@
         $('#initialize').click(function(){
             const n_clusters = $('#n_clusters').val();
             const init_method = $('#init_method').val();
-            if init_method == 'manual'{
+            if (init_method == 'manual'){
                 manualCentroids = [];
                 $('#plot').off('click');
                 $('#plot').click(function(event){
@@ -75,7 +75,7 @@
         $('#step').click(function(){
             $.post('/step', function(response){
                 update_plot(response.plot);
-                if response.converged{
+                if (response.converged){
                     alert('Algorithm has converged');
                 }
             }).fail(function(error){
@@ -85,7 +85,7 @@
         $('#run').click(function(){
             $.post('/run', function(response){
                 update_plot(response.plot);
-                if response.converged{
+                if (response.converged){
                     alert('Algorithm has converged');
                 }
             }).fail(function(error){
@@ -94,9 +94,9 @@
         });
         $('#reset').click(function(){
             $.post('/reset', function(response){
-                if response.success{
+                if (response.success){
                     update_plot(response.plot);
-                    if response.clear_manual_centroids{
+                    if (response.clear_manual_centroids){
                         manualCentroids = [];
                     }
                 }else{
