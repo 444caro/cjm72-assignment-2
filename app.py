@@ -80,11 +80,6 @@ def cluster_plot(data, centers, assign):
 
 
 
-
-
-
-
-
 @app.route('/')
 def index():
     return render_template('index.html')
@@ -92,30 +87,45 @@ def index():
 @app.route('/initialize', methods=['POST'])
 def initialize():
     global kmeans, centroids_init, init_plot
-    num_clusters = int(request.form['num_clusters'])
-    init_method = request.form['init_method']
-    centroids_init = False
-    data = generate_rand_data(n = 300)
-    kmeans = KMeans(data, num_clusters, init_method)
-    fig = cluster_plot(data, None, [-1] * len(kmeans.data))
-    init_plot = fig
-    return jsonify({'plot': fig})
+    try:
+        num_clusters = int(request.form.get('num_clusters'))
+        init_method = request.form.get('init_method')
+        centroids_init = False
+        data = generate_rand_data(n = 300)
+        kmeans = KMeans(data, num_clusters, init_method)
+        fig = cluster_plot(data, None, [-1] * len(kmeans.data))
+        init_plot = fig
+        return jsonify({'plot': fig})
+    except Exception as e:
+        return jsonify({'error': str(e)})
 
 @app.route('/step', methods=['POST'])
 def step():
     global kmeans
-    converged = not kmeans.step()
-    fig = cluster_plot(kmeans.data, kmeans.centers, kmeans.assign)
-    return jsonify({'plot': fig, 'converged': converged})
+    if kmeans is None:
+        return jsonify({'error': 'Initialize'})
+    try:
+        converged = not kmeans.step()
+        fig = cluster_plot(kmeans.data, kmeans.centers, kmeans.assign)
+        return jsonify({'plot': fig, 'converged': converged})
+    except Exception as e:
+        return jsonify({'error': str(e)})
+
 
 @app.route('/run', methods=['POST'])
 def run():
     global kmeans 
-    converged = False
-    while not converged:
-        converged = not kmeans.step()
-    fig = cluster_plot(kmeans.data, kmeans.centers, kmeans.assign)
-    return jsonify({'converged' : True, 'plot' :fig})
+    if kmeans is None:
+        return jsonify({'error': 'Initialize'})
+    try:
+        converged = False
+        while not converged:
+            converged = not kmeans.step()
+        fig = cluster_plot(kmeans.data, kmeans.centers, kmeans.assign)
+        return jsonify({'plot': fig, 'converged': True})
+    except Exception as e:
+        return jsonify({'error': str(e)})
+
 
 @app.route('/reset', methods=['POST'])
 def reset():
@@ -131,20 +141,27 @@ def reset():
 @app.route('/manual_centroids', methods=['POST'])
 def manual_centroids():
     global kmeans
-    centroids = json.loads(request.form['centroids'])
-    manual_centers = np.array([[c['x'], c['y']] for c in centroids])    
-    if len(manual_centers) > kmeans.n_clusters:
-        manual_centers = manual_centers[:kmeans.n_clusters]
-    manual_centers[:, 0] = manual_centers[:,0] * (kmeans.data[:, 0].max()/600)
-    manual_centers[:, 1] = manual_centers[:,1] * (kmeans.data[:, 1].max()/600)
-    kmeans.centers = manual_centers
-    kmeans.assign_clusters()
-    fig = cluster_plot(kmeans.data, kmeans.centers, kmeans.assign)  
-    return jsonify({'plot': fig})    
+    if kmeans is None:
+        return jsonify({'error': 'manual_centroids'})
+    try:
+        centroids = json.loads(request.form['centroids'])
+        manual_centers = np.array([[c['x'], c['y']] for c in centroids])    
+        if len(manual_centers) > kmeans.n_clusters:
+            manual_centers = manual_centers[:kmeans.n_clusters]
+        manual_centers[:, 0] = manual_centers[:,0] * (kmeans.data[:, 0].max()/600)
+        manual_centers[:, 1] = manual_centers[:,1] * (kmeans.data[:, 1].max()/600)
+        kmeans.centers = manual_centers
+        kmeans.assign_clusters()
+        fig = cluster_plot(kmeans.data, kmeans.centers, kmeans.assign)  
+        return jsonify({'plot': fig})    
+    except Exception as e:
+        return jsonify({'error': str(e)})
 
 @app.route('/get_data', methods=['GET'])
 def get_data():
     global kmeans 
+    if kmeans is None:
+        return jsonify({'error': 'get_data'})
     fig = cluster_plot(kmeans.data, kmeans.centers, kmeans.assign)
     return jsonify(pio.to_json(fig))
 
