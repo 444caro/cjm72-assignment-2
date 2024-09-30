@@ -15,6 +15,9 @@ class KMeans:
         self.initial_centroids = initial_centroids
         
     def initialize_centroids(self, X):
+        if X is None or len(X) == 0:
+            raise ValueError("Input data X is empty or None.")
+            
         print(f"Initialization method: {self.init_method}")
         if self.init_method == 'random':
             centroids = X[np.random.choice(X.shape[0], self.n_clusters, replace=False)] 
@@ -53,6 +56,7 @@ class KMeans:
             raise ValueError("Invalid initialization method")
     
     def fit(self, X):
+        print("Input data (X):", X)
         self.centroids = self.initialize_centroids(X)
         if self.centroids is None:
             raise ValueError("Centroids not initialized")
