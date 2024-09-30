@@ -9,6 +9,11 @@
             max-width: 100%;
             height: auto;
         }
+        #plot{
+            width: 600px;
+            height: 600px;
+            border: 1px solid black;
+        }
     </style>
     <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
@@ -38,76 +43,43 @@
 
     <script>
         let manualCentroids = [];
+
+        function update_plot(plot){
+            $('#plot').html(plot);
+        }
+
         function initialize_plot(){
             $.post('/initialize', {n_clusters: $('#n_clusters').val(), init_method: $('#init_method').val()}, function(response){
                 update_plot(response.plot);
             });
         }
-        function update_plot(plot){
-            $('#plot').html(plot);
-        }
-        $('#initialize').click(function(){
-            const n_clusters = $('#n_clusters').val();
-            const init_method = $('#init_method').val();
-            if (init_method == 'manual'){
-                manualCentroids = [];
-                $('#plot').off('click');
-                $('#plot').click(function(event){
-                    const plot_offset = $(this).offset();
-                    const x = event.clientX - plot_offset.left;
-                    const y = event.clientY - plot_offset.top;
-                    manualCentroids.push([x, y]);
-                    $.post('/manualCentroids', {centroids: JSON.stringify(manualCentroids)}, function(response){
-                        update_plot(response.plot);
-                    }).fail(function(error){
-                        console.error('Error:', error);
-                    });
-                });
-            }else{
-                $('#plot').off('click');
-            }
-            $.post('/initialize', {n_clusters: n_clusters, init_method: init_method}, function(response){
-                update_plot(response.plot);
-            }).fail(function(error){
-                console.error('Error:', error);
-            });
-        });
-        $('#step').click(function(){
-            $.post('/step', function(response){
-                update_plot(response.plot);
-                if (response.converged){
-                    alert('Algorithm has converged');
-                }
-            }).fail(function(error){
-                console.error('Error:', error);
-            });
-        });
-        $('#run').click(function(){
-            $.post('/run', function(response){
-                update_plot(response.plot);
-                if (response.converged){
-                    alert('Algorithm has converged');
-                }
-            }).fail(function(error){
-                console.error('Error:', error);
-            });
-        });
-        $('#reset').click(function(){
-            $.post('/reset', function(response){
-                if (response.success){
-                    update_plot(response.plot);
-                    if (response.clear_manual_centroids){
-                        manualCentroids = [];
-                    }
-                }else{
-                    console.error('Error:', response.error);
-                }
-            }).fail(function(error){
-                console.error('Error:', error);
-            });
-        });
+
         $(document).ready(function(){
             initialize_plot();
+            $('#initialize').click(function(){
+                initialize_plot();
+            });
+            $('#step').click(function(){
+                $.post('/step', {},function(response){
+                    if (response.plot){
+                        update_plot(response.plot);
+                    }
+                });
+            });
+            $('#run').click(function(){
+                $.post('/run', {},function(response){
+                    if (response.plot){
+                        update_plot(response.plot);
+                    }
+                });
+            });
+            $('#reset').click(function(){
+                $.post('/reset', {},function(response){
+                    if (response.success){
+                        update_plot(response.plot);
+                    }
+                });
+            });
         });
     </script>
 </body>

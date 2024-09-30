@@ -70,7 +70,7 @@ def generate_rand_data(n = 300):
 
 def cluster_plot(data, centers, assign):
     fig = go.Figure()
-    fig.add_trace(go.Scatter(x=data[:, 0], y=data[:, 1], mode='markers', marker=dict(color=assign), name = 'Data'))
+    fig.add_trace(go.Scatter(x=data[:, 0], y=data[:, 1], mode='markers', marker=dict(color='blue', showscale = True), name = 'Data'))
     if centers is not None:
         fig.add_trace(go.Scatter(x=centers[:, 0], y=centers[:, 1], mode='markers', marker=dict(color='red', symbol = 'x', size=10), name = 'Centroids'))
     fig.update_layout(xaxis_title = "X Axis", yaxis_title = "Y Axis", width=600, height=600)
